@@ -1,0 +1,40 @@
+service: serverless-sns-tutorials
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  profile: serverless
+  region: ap-south-1
+  iam:
+    role:
+      statements: 
+        - Effect: Allow
+          Action: 
+            - 'sns:SetSMSAttributes'
+            - 'sns:Publish'
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - 'logs:CreateLogStream'
+            - 'logs:CreateLogGroup'
+          Resource: arn:aws:logs:ap-south-1:594108745002:log-group:/aws/lambda/serverless-sns-tutorials-dev*:*
+functions:
+  send_sms:
+    handler: handler.send_sms
+    events:
+      - http:
+          path: /send-sms
+          method: POST
+          cors: true
+      - sns:
+          arn: !Ref SuperTopic
+          topicName: CustomTopic    
+
+resources:
+  Resources:
+    SuperTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: CustomTopic
