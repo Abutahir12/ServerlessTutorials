@@ -2,6 +2,8 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 
+from html_input import html_content
+
 sns = boto3.client("sns")
 
 def send_sms(event, context):
@@ -64,6 +66,7 @@ def publish_to_newsletter(event, context):
     print(event)
     body = json.loads(event.get("body"))
     message = body.get("message")
+    # message = html_content.get("NEWSLETTER")
     newsletter_name = body.get("newsletter_name")
     try:
         # sms type can be either "Promotional" or "Transactional"
