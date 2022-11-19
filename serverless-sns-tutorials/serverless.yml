@@ -5,7 +5,7 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: python3.8
-  profile: serverless
+  profile: personal
   region: ap-south-1
   iam:
     role:
@@ -25,12 +25,34 @@ functions:
     handler: handler.send_sms
     events:
       - http:
-          path: /send-sms
+          path: newsletter/send-sms
           method: POST
           cors: true
       - sns:
           arn: !Ref SuperTopic
           topicName: CustomTopic    
+
+  create_topic:
+    handler: handler.create_topic
+    events:
+      - http:
+          path: newsletter/create-newsletter
+          method: POST
+          cors: true
+  subscribe:
+    handler: handler.subscribe_to_newsletter
+    events:
+      - http:
+          path: newsletter/subscribe
+          method: POST
+          cors: true    
+  publish:
+    handler: handler.publish_to_newsletter
+    events:
+      - http:
+          path: newsletter/publish
+          method: POST
+          cors: true                 
 
 resources:
   Resources:

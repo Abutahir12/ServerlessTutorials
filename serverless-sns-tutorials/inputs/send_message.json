@@ -1,0 +1,3 @@
+{
+    "body": "{\r\n        \"message\": \"Hey! This is a message from SNS\",\r\n        \"phone_number\": \"+91888888888\"\r\n    }"
+}
