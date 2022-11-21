@@ -1,0 +1,19 @@
+service: serverless-ses-tutorials
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  profile: personal
+  region: ap-south-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: ses:*
+          Resource: '*'
+
+functions:
+  send_email:
+    handler: handler.send_email
