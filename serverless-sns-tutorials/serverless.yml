@@ -7,6 +7,7 @@ provider:
   runtime: python3.8
   profile: personal
   region: ap-south-1
+  stage: ${opt:stage, 'dev'}
   iam:
     role:
       statements: 
@@ -16,10 +17,12 @@ provider:
             - 'sns:Publish'
           Resource: '*'
         - Effect: Allow
-          Action:
-            - 'logs:CreateLogStream'
-            - 'logs:CreateLogGroup'
-          Resource: arn:aws:logs:ap-south-1:594108745002:log-group:/aws/lambda/serverless-sns-tutorials-dev*:*
+          Action: 'ses:*'
+          Resource: '*'
+
+custom:
+  SUBSCRIBERS_DDB_TABLE: SubscribersDDBTable-${self:provider.stage}
+
 functions:
   send_sms:
     handler: handler.send_sms
@@ -27,10 +30,7 @@ functions:
       - http:
           path: newsletter/send-sms
           method: POST
-          cors: true
-      - sns:
-          arn: !Ref SuperTopic
-          topicName: CustomTopic    
+          cors: true   
 
   create_topic:
     handler: handler.create_topic
@@ -39,6 +39,7 @@ functions:
           path: newsletter/create-newsletter
           method: POST
           cors: true
+
   subscribe:
     handler: handler.subscribe_to_newsletter
     events:
@@ -46,17 +47,46 @@ functions:
           path: newsletter/subscribe
           method: POST
           cors: true    
+          
   publish:
     handler: handler.publish_to_newsletter
     events:
       - http:
           path: newsletter/publish
           method: POST
-          cors: true                 
+          cors: true           
+      - sns:
+          arn: !Ref NewsLetterTopic
+          topicName: Newsletter-${self:provider.stage} 
+    environment:
+      DDB_TABLE_NAME: ${self:custom.SUBSCRIBERS_DDB_TABLE}      
+
 
 resources:
   Resources:
-    SuperTopic:
+    NewsLetterTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: CustomTopic
+        TopicName: Newsletter-${self:provider.stage}
+    SubscribersDDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: SubscribersDDBTable-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: news_letter
+            AttributeType:  S
+          - AttributeName: admin_email
+            AttributeType:  S  
+        KeySchema:
+          - AttributeName: news_letter
+            KeyType:  Hash    
+          - AttributeName: admin_email
+            KeyType:  Hash  
+        GlobalSecondaryIndexes:
+          - IndexName: ByNewsLetter
+            KeySchema:
+              - AttributeName: news_letter
+                KeyType: HASH
+            Projection:
+              ProjectionType: "ALL"    
+        BillingMode: PAY_PER_REQUEST    
