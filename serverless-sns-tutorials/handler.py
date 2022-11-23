@@ -2,12 +2,14 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 import os
-from html_input import html_content
 from constants import SUBSCRIBERS_DDB_GSI
-
+from dotenv import load_dotenv
+load_dotenv()
 sns = boto3.client("sns")
-DDB_Table = os.environ["DDB_TABLE_NAME"]
 
+# DDB_Table = os.getenv("DDB_TABLE_NAME")
+DDB_Table = "SubscribersDDBTable-dev"
+DynamoDb_Table=boto3.resource("dynamodb").Table(DDB_Table)
 
 def send_sms(event, context):
     print(event)
@@ -33,13 +35,20 @@ def create_topic(event, context):
     body = json.loads(event.get("body"))
     name = body.get("name")
     try:
+        # TODO: Add validations for topic name, also add full string match, for example: 
+        # there can be a topic with the name Developer-Essentials, and one topic can be created called Essentials 
+        arns = sns.list_topics()["Topics"]
+        
+        if arn:= [arn_dict.get('TopicArn') for arn_dict in arns if name in arn_dict.get('TopicArn')][0]:
+            print(arn)
+            return {"statusCode": 200, "body": json.dumps("Topic Already exists")}
         topic = sns.create_topic(Name=name)
-        print("Created topic %s with ARN %s.", name, topic.get("arn"))
+        response=f"Created topic {name} with ARN {topic.get('arn')}."
     except ClientError:
         print("Couldn't create topic %s.", name)
         return {"statusCode": 500, "body": json.dumps({"message": "failed"})}
     else:
-        return {"statusCode": 200, "body": json.dumps(topic)}
+        return {"statusCode": 201, "body": json.dumps(response)}
 
 
 def subscribe_to_newsletter(event, context):
@@ -52,23 +61,25 @@ def subscribe_to_newsletter(event, context):
 
     try:
         arns = sns.list_topics()["Topics"]
-        newsletter_arn = ""
-        for arn in arns:
-            topic_arn = arn.get("TopicArn")
-            if newsletter_name in topic_arn:
-                newsletter_arn += topic_arn
+        print(arns)
+        newsletter_arn = [arn_dict.get('TopicArn') for arn_dict in arns if newsletter_name in arn_dict.get('TopicArn')]
+        if not len(newsletter_arn):
+            return {"statusCode": 200, "body": json.dumps("Newsletter does not exists")}
+        print(newsletter_arn)
         response = sns.subscribe(
-            TopicArn=newsletter_arn, Protocol="email", Endpoint=email
+            TopicArn=newsletter_arn[0], Protocol="email", Endpoint=email
         )
+        
         # TODO: The admin email should also come in api request to add it in db
         data = {
             "admin_email": "abutahirism@gmail.com",
             "news_letter": newsletter_name,
             "user_email": email
         }
-        res=DDB_Table.putItem(data)
+        # res = dynamodb.put_item(TableName = DDB_Table, Item = data, ReturnValues = "ALL_NEW")
+        DynamoDb_Table.put_item(Item=data)
         # Record logger info indicating the success of putItem
-        print(res)
+        
     except ClientError:
         print("Couldn't subscribe from email %s.", email)
         return {"statusCode": 500, "body": json.dumps({"message": "failed"})}
@@ -85,14 +96,11 @@ def publish_to_newsletter(event, context):
         # sms type can be either "Promotional" or "Transactional"
         # If you don't specify "set_sms_attributes", the type will be "Promotional by default"
         arns = sns.list_topics()["Topics"]
-        newsletter_arn = ""
-        for arn in arns:
-            topic_arn = arn.get("TopicArn")
-            if newsletter_name in topic_arn:
-                newsletter_arn += topic_arn
-
+        newsletter_arn = [arn_dict.get('TopicArn') for arn_dict in arns if newsletter_name in arn_dict.get('TopicArn')]
+        if not len(newsletter_arn):
+            return {"statusCode": 200, "body": json.dumps("Newsletter does not exists")}
         resp = sns.publish(
-            TopicArn=newsletter_arn, Message=message, Subject="This is a test"
+            TopicArn=newsletter_arn[0], Message=message, Subject="This is a test"
         )
         response = {"message": f"Message sent to: {newsletter_name}"}
     except ClientError:
