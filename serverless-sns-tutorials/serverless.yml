@@ -8,6 +8,8 @@ provider:
   profile: personal
   region: ap-south-1
   stage: ${opt:stage, 'dev'}
+  environment:
+    SUBSCRIBERS_DDB_TABLE: ${self:custom.SUBSCRIBERS_DDB_TABLE}
   iam:
     role:
       statements: 
@@ -68,20 +70,18 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: Newsletter-${self:provider.stage}
-    SubscribersDDBTable:
+    NewsLetterDDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: SubscribersDDBTable-${self:provider.stage}
+        TableName: ${self:custom.SUBSCRIBERS_DDB_TABLE}
         AttributeDefinitions:
           - AttributeName: news_letter
             AttributeType:  S
           - AttributeName: admin_email
             AttributeType:  S  
         KeySchema:
-          - AttributeName: news_letter
-            KeyType:  Hash    
           - AttributeName: admin_email
-            KeyType:  Hash  
+            KeyType:  HASH  
         GlobalSecondaryIndexes:
           - IndexName: ByNewsLetter
             KeySchema:
