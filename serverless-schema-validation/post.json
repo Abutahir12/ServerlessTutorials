@@ -1,0 +1,5 @@
+{
+    "queryStringParameters": {},
+    "pathParameters": {},
+    "body": "{ \"name\": \"Rohit\", \"designation\": \"product manager\"}"
+}
