@@ -57,11 +57,19 @@ functions:
           path: newsletter/publish
           method: POST
           cors: true           
-      - sns:
-          arn: !Ref NewsLetterTopic
-          topicName: Newsletter-${self:provider.stage} 
+      # - sns:
+      #     arn: !Ref NewsLetterTopic
+      #     topicName: Newsletter-${self:provider.stage} 
     environment:
       DDB_TABLE_NAME: ${self:custom.SUBSCRIBERS_DDB_TABLE}      
+
+  send_email:
+    handler: handler.send_email
+    events:
+      - sns:
+          arn: !Ref NewsLetterTopic
+          topicName: Newsletter-${self:provider.stage}
+
 
 
 resources:
