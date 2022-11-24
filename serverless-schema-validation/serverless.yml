@@ -1,0 +1,30 @@
+service: serverless-schema-validation
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  profile: personal
+  region: ap-south-1
+
+functions:
+  get_item:
+    handler: handler.get_item
+    events:
+      - http:
+          path: /api/validate/{eid}
+          method: GET
+          cors: true
+          
+  post_item:
+    handler: handler.post_item
+    events:
+      - http:
+          path: /api/validate
+          method: POST
+          cors: true
+          request:
+            schemas:
+              application/json: ${file(validation_schema.json)}             
+

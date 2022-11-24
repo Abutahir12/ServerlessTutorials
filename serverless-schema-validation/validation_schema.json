@@ -1,0 +1,15 @@
+{
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "title": "The Post Employee Schema",
+    "required": [
+        "company"
+    ],
+    "properties": {
+        "company": {
+            "type": "string",
+            "title": "The Company Schema"
+        }
+    }
+}
