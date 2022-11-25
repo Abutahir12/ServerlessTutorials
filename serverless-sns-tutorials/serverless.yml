@@ -21,6 +21,10 @@ provider:
         - Effect: Allow
           Action: 'ses:*'
           Resource: '*'
+        - Effect: Allow
+          Action: 'dynamodb:*'
+          Resource: '*'
+            
 
 custom:
   SUBSCRIBERS_DDB_TABLE: SubscribersDDBTable-${self:provider.stage}

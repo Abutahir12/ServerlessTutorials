@@ -3,10 +3,11 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 from constants import SUBSCRIBERS_DDB_GSI
-from dotenv import load_dotenv
+
+# from dotenv import load_dotenv
 from html_input import html_content
 
-load_dotenv()
+# load_dotenv()
 sns = boto3.client("sns")
 
 # DDB_Table = os.getenv("DDB_TABLE_NAME")
@@ -103,40 +104,46 @@ def publish_to_newsletter(event, context):
     body = json.loads(event.get("body"))
     # message = body.get("message")
     # TODO: Get email content from body
-    # message = html_content.get("NEWSLETTER")
+    html_template = html_content.get("NEWSLETTER")
     newsletter_name = body.get("newsletter_name")
     message = {
         "newsletter_name": newsletter_name,
-        "email_content": "This is a sample test for publishing emails to subscribers",
+        "email_content": html_template,
     }
     try:
         # sms type can be either "Promotional" or "Transactional"
         # If you don't specify "set_sms_attributes", the type will be "Promotional by default"
-        arns = sns.list_topics()["Topics"]
-        newsletter_arn = [
-            arn_dict.get("TopicArn")
-            for arn_dict in arns
-            if newsletter_name in arn_dict.get("TopicArn")
-        ]
-        print("XXX", newsletter_arn)
-        if not len(newsletter_arn):
-            return {"statusCode": 404, "body": json.dumps("Newsletter does not exists")}
-        print("Publishing to topic")    
-        resp = sns.publish(TargetArn=newsletter_arn[0], Message= json.dumps(message))
-        
+        # TODO This code below is useful for sending individuals who subscribed to a particular topic, make this function dynamic to trigger lambda as well as payload for simple emails to send emails directly.
+        # arns = sns.list_topics()["Topics"]
+        # newsletter_arn = [
+        #     arn_dict.get("TopicArn")
+        #     for arn_dict in arns
+        #     if newsletter_name in arn_dict.get("TopicArn")
+        # ]
+        # print("XXX", newsletter_arn)
+        # if not len(newsletter_arn):
+        #     return {"statusCode": 404, "body": json.dumps("Newsletter does not exists")}
+        print("Publishing to topic")
+        newsletter_dev_arn = "arn:aws:sns:ap-south-1:594108745002:Newsletter-dev"
+        resp = sns.publish(TopicArn=newsletter_dev_arn, Message=json.dumps(message))
+
         response = {"message": f"Message sent to: {newsletter_name}"}
     except ClientError:
         # print("Couldn't subscribe from email %s.", email)
         return {"statusCode": 500, "body": json.dumps({"message": "failed"})}
     else:
-        return {"statusCode": 200, "body": json.dumps(newsletter_arn)}
+        return {"statusCode": 200, "body": json.dumps(newsletter_name)}
 
 
 def send_email(event, context):
-    print("SEND EMAIL LAMBDA:",event)
+    print("SEND EMAIL LAMBDA:", event)
+    message = json.loads(event.get("Records")[0].get("Sns").get("Message"))
+    if not message:
+        return {"statusCode": 400, "body": json.dumps("Missing Required input")}
     SES = boto3.client("ses")
-    body = json.loads(event.get("body"))
-    newsletter_name = body["newsletter_name"]
+    # body = json.loads(event.get("body"))
+    newsletter_name = message.get("newsletter_name")
+    email_content =  message.get("email_content")
     # TODO: Filter the results by admin email and then use key condition expressions to filter by newsletter
     # because there can be many admins who will use this service, also add pagination if required
     results = DynamoDb_Table.query(
@@ -156,12 +163,12 @@ def send_email(event, context):
             Destination={"ToAddresses": [record["user_email"]]},
             Message={
                 "Subject": {"Data": "This is an SES test email"},
-                "Body": {"Html": {"Data": body["email_content"]}},
+                "Body": {"Html": {"Data": email_content}},
             },
         )
     body = {"message": "Go Serverless v3.0! Your function executed successfully!"}
 
     return {"statusCode": 200, "body": json.dumps(body)}
 
-#TODO: Dynamically subscribe to a topic depending on the type of protocol, ex: email, sms, lambda endpoint etc.
 
+# TODO: Dynamically subscribe to a topic depending on the type of protocol, ex: email, sms, lambda endpoint etc.
