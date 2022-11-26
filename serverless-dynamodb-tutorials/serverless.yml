@@ -1,0 +1,42 @@
+service: serverless-dynamodb-tutorials
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  profile: personal
+
+functions:
+  hello:
+    handler: handler.hello
+
+# Ref: creation rules : https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SQLtoNoSQL.CreateTable.html
+# Ref: Supported Data types: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.DataTypes.html
+resources:
+  Resources:
+    MyFirstTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: developer_essentials
+        AttributeDefinitions:
+          - AttributeName: employee_email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: employee_email
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: byDesignation
+            KeySchema:
+              - AttributeName: designation 
+                KeyType: HASH
+            Projection:
+                ProjectionType: "ALL"  
+        BillingMode: PAY_PER_REQUEST          
+          
+                    
+
+
+
+
+        
