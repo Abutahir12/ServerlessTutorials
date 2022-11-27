@@ -22,6 +22,8 @@ resources:
         AttributeDefinitions:
           - AttributeName: employee_email
             AttributeType: S
+          - AttributeName: designation
+            AttributeType: S
         KeySchema:
           - AttributeName: employee_email
             KeyType: HASH
