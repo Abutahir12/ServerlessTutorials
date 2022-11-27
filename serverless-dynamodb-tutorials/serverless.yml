@@ -6,10 +6,22 @@ provider:
   name: aws
   runtime: python3.8
   profile: personal
+  region: ap-south-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: 'dynamodb:*'
+          Resource: arn:aws:dynamodb:ap-south-1:594108745002:table/developer_essentials
 
 functions:
-  hello:
-    handler: handler.hello
+  add_data:
+    handler: handler.add_data
+    events:
+      - http:
+          path: /api/items/add
+          method: POST
+          cors: true
 
 # Ref: creation rules : https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SQLtoNoSQL.CreateTable.html
 # Ref: Supported Data types: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBMapper.DataTypes.html
@@ -21,6 +33,8 @@ resources:
         TableName: developer_essentials
         AttributeDefinitions:
           - AttributeName: employee_email
+            AttributeType: S
+          - AttributeName: designation
             AttributeType: S
         KeySchema:
           - AttributeName: employee_email

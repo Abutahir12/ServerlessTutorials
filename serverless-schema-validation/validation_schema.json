@@ -1,15 +1,34 @@
 {
-    "definitions": {},
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
     "title": "The Post Employee Schema",
     "required": [
-        "company"
+        "email",
+        "designation"
     ],
     "properties": {
-        "company": {
+        "email": {
             "type": "string",
-            "title": "The Company Schema"
+            "pattern": "^(.+)@(.+)$"
+        },
+        "designation": {
+            "type": "string"
+        },
+        "past_companies_and_experience": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "company_name": {
+                        "type": "string",
+                        "pattern": "^[a-zA-Z]"
+                    },
+                    "years_of_exp": {
+                        "type": "number",
+                        "pattern": "^[0-9]"
+                    }
+                }
+            }
         }
     }
 }

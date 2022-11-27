@@ -1,0 +1,3 @@
+{
+    "body": "{\r\n        \"name\": \"John Doe\",\r\n        \"employee_email\": \"joe.doe@gmail.com\",\r\n        \"designation\": \"Software Engineer\",\r\n        \"company\": \"KonfHub Technologies\"\r\n    }"
+}
