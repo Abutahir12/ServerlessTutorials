@@ -1,0 +1,20 @@
+service: serverless-sqs-tutorials
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  profile: personal
+  region: ap-south-1
+
+functions:
+  push:
+    handler: handler.push_to_q
+    events:
+      - http:
+          path: /sqs/push
+          method: POST
+          cors: true
+          
+
